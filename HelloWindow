@@ -1,0 +1,99 @@
+#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <windows.h>
+using namespace std;
+
+// Function List
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void processInput(GLFWwindow* window);
+
+// Settings
+const unsigned int SRC_WIDTH = 800;
+const unsigned int SRC_HEIGHT = 600;
+
+// Global variable for changing color
+float colorChange = 0;
+float magnitude = 0.01;
+
+int main()
+{
+	// Initialize GLFW
+	glfwInit();
+
+	// Tell GLFW that we want to use version 3.3 of OpenGL in the Core mode
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// Create a GLFW object window named "LearnOpenGL" with 800 x 800 pixels
+	GLFWwindow* window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "LearnOpenGL", NULL, NULL);
+
+	// If the window object failed to create for any reason, terminate the program
+	if (window == NULL)
+	{
+		cout << "Failed to create GLFW window" << endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	// Introduce the window into the current context
+	glfwMakeContextCurrent(window);
+
+	// Set a callback function (?)
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+	// Load GLAD to configure OpenGL
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		cout << "Failed to initialize GLAD" << endl;
+		return -1;
+	}
+
+	// Render Loop
+	while (!glfwWindowShouldClose(window))
+	{
+		// Input
+		processInput(window);
+
+
+		// Rendering commands here
+		glClearColor(0.2f + colorChange, 0.3f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+
+		// GLFW: Swap buffers and poll IO events (key pressed/released, mouse moved, etc.)
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
+	return 0;
+}
+
+// PROCESS INPUT:
+// If ESC: Close window
+// If UP ARROW: Increase colorChange by magnitude
+// If DOWN ARROW: Decrease colorChange by magnitude
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, true);
+	}
+	else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		colorChange = colorChange + magnitude;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		colorChange = colorChange - magnitude;
+	}
+}
+
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+}
