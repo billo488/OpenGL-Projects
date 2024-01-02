@@ -1,0 +1,163 @@
+#include <iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+// ---------------------------------------------------------------------------------
+// PROJECT: HelloRectangle
+// AUTHOR: willo488
+// DATE: 1/1/2024
+// DESCRIPTION: This project follows a free tutorial published by "LearnOpenGL".
+// The project consists of creating a rectangle by specifying the position of
+// two triangles. In order to avoid specifying unnecessary vertices, an EBO is used.
+// ---------------------------------------------------------------------------------
+
+// FUNCTION DECLARATIONS
+void processInput(GLFWwindow* window);
+
+// WINDOW SETTINGS
+const unsigned int SRC_WIDTH = 800;
+const unsigned int SRC_HEIGHT = 600;
+
+// VERTEX SHADER SOURCE CODE
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+"gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+
+// FRAGMENT SHADER SOURCE CODE
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\0";
+
+int main() {
+
+	// Error Check variables
+	int success;
+	char infoLog[512];
+
+	// Vertices (Rectangle)
+	float vertices[] = {
+		0.5f,  0.5f,  0.0f,	 // top right
+		0.5f, -0.5f,  0.0f,  // bottom right
+	   -0.5f, -0.5f,  0.0f,  // bottom left
+	   -0.5f,  0.5f,  0.0f   // top left
+	};
+
+	// Indicies (Order for creating triangle #1, then triangle #2)
+	unsigned int indices[] = {
+		0, 1, 3, // Triangle #1
+		1, 2, 3  // Triangle #2
+	};
+
+	// Initialize GLFW
+	glfwInit();
+
+	// Specify OpenGL version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// Create OpenGL window object named "LearnOpenGL"
+	GLFWwindow* window = glfwCreateWindow(SRC_WIDTH, SRC_HEIGHT, "LearnOpenGL", NULL, NULL);
+	if (window == NULL) {
+		std::cout << "Failed to create window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	// Set window to current context
+	glfwMakeContextCurrent(window);
+
+	// GLAD: Load all OpenGL function pointers
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return -1;
+	}
+
+	// Create + compile vertex shader
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	glCompileShader(vertexShader);
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR: Vertex shader failed to compile\n" << infoLog << std::endl;
+	}
+
+	// Create + compile fragment shader
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+		std::cout << "ERROR: Fragment shader failed to compile\n" << infoLog << std::endl;
+	}
+
+	// Create shader program
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// Create VAO, VBO, and an EBO
+	unsigned int VAO, VBO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	// Bind VAO first before VBO and EBO
+	glBindVertexArray(VAO);
+
+	// Bind and set VBO
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Bind and set EBO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// Set vertex attributes
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// ENABLE WIREFRAME
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// RENDER LOOP
+	while (!glfwWindowShouldClose(window)) {
+		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+		processInput(window);
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	// Exit program calls
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(shaderProgram);
+	glfwDestroyWindow(window);
+	glfwTerminate();
+	return 0;
+}
+
+// Function to read user input and close window upon "ESC" being pressed
+void processInput(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, true);
+	}
+}
